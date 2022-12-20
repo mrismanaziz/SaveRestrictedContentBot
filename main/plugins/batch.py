@@ -93,11 +93,8 @@ async def run_batch(userbot, client, sender, countdown, link):
             timer = 10
         if i < 100 and i > 50:
             timer = 15
-        if not 't.me/c/' in link:
-            if i < 25:
-                timer = 2
-            else:
-                timer = 3
+        if 't.me/c/' not in link:
+            timer = 2 if i < 25 else 3
         try: 
             integer = int(ids[i])
             er, out = await get_bulk_msg(userbot, client, sender, link, integer) 

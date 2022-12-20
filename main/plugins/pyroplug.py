@@ -14,21 +14,17 @@ from telethon import events
 from telethon.tl.types import DocumentAttributeVideo
 
 def thumbnail(sender):
-    if os.path.exists(f'{sender}.jpg'):
-        return f'{sender}.jpg'
-    else:
-         return None
+    return f'{sender}.jpg' if os.path.exists(f'{sender}.jpg') else None
       
 async def check(userbot, client, link):
     msg_id = 0
     try:
         msg_id = int(link.split("/")[-1])
     except ValueError:
-        if '?single' in link:
-            link_ = link.split("?single")[0]
-            msg_id = int(link_.split("/")[-1])
-        else:
+        if '?single' not in link:
             return False, "**Invalid Link!**"
+        link_ = link.split("?single")[0]
+        msg_id = int(link_.split("/")[-1])
     if 't.me/c/' in link:
         try:
             chat = int('-100' + str(link.split("/")[-2]))
@@ -53,28 +49,25 @@ async def get_msg(userbot, client, sender, edit_id, msg_link, i, bulk=False):
     try:
         msg_id = int(msg_link.split("/")[-1])
     except ValueError:
-        if '?single' in msg_link:
-            link_ = msg_link.split("?single")[0]
-            msg_id = int(link_.split("/")[-1])
-        else:
+        if '?single' not in msg_link:
             return True, await client.edit_message_text(sender, edit_id, "**Invalid Link!**")
+        link_ = msg_link.split("?single")[0]
+        msg_id = int(link_.split("/")[-1])
     if 't.me/c/' in msg_link:
         chat = int('-100' + str(msg_link.split("/")[-2]))
         file = ""
         try:
             msg = await userbot.get_messages(chat, msg_id)
-            if msg.media:
-                if 'web_page' in msg.media:
-                    edit = await client.edit_message_text(sender, edit_id, "Cloning.")
-                    await client.send_message(sender, msg.text.markdown)
-                    await edit.delete()
-                    return True, None
-            if not msg.media:
-                if msg.text:
-                    edit = await client.edit_message_text(sender, edit_id, "Cloning.")
-                    await client.send_message(sender, msg.text.markdown)
-                    await edit.delete()
-                    return True, None
+            if msg.media and 'web_page' in msg.media:
+                edit = await client.edit_message_text(sender, edit_id, "Cloning.")
+                await client.send_message(sender, msg.text.markdown)
+                await edit.delete()
+                return True, None
+            if not msg.media and msg.text:
+                edit = await client.edit_message_text(sender, edit_id, "Cloning.")
+                await client.send_message(sender, msg.text.markdown)
+                await edit.delete()
+                return True, None
             edit = await client.edit_message_text(sender, edit_id, "Trying to Download.")
             file = await userbot.download_media(
                 msg,
@@ -87,9 +80,7 @@ async def get_msg(userbot, client, sender, edit_id, msg_link, i, bulk=False):
                 )
             )
             await edit.edit('Preparing to Upload!')
-            caption = str(file)
-            if msg.caption is not None:
-                caption = msg.caption
+            caption = msg.caption if msg.caption is not None else str(file)
             if str(file).split(".")[-1] in ['mkv', 'mp4', 'webm', 'mpe4', 'mpeg']:
                 if str(file).split(".")[-1] in ['webm', 'mkv', 'mpe4', 'mpeg']:
                     path = str(file).split(".")[0] + ".mp4"
@@ -115,11 +106,9 @@ async def get_msg(userbot, client, sender, edit_id, msg_link, i, bulk=False):
                     attributes=attributes, 
                     force_document=False
                 )
-                os.remove(file)
             elif str(file).split(".")[-1] in ['jpg', 'jpeg', 'png', 'webp']:
                 await edit.edit("Uploading photo.")
                 await bot.send_file(sender, file, caption=caption)
-                os.remove(file)
             else:
                 thumb_path=thumbnail(sender)
                 UT = time.time()
@@ -131,7 +120,7 @@ async def get_msg(userbot, client, sender, edit_id, msg_link, i, bulk=False):
                     thumb=thumb_path, 
                     force_document=True
                 )
-                os.remove(file)
+            os.remove(file)
             await edit.delete()
             return True, None
         except (ChannelBanned, ChannelInvalid, ChannelPrivate, ChatIdInvalid, ChatInvalid):
