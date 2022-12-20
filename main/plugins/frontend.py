@@ -52,6 +52,5 @@ async def clone(event):
             await get_msg(userbot, Bot, event.sender_id, edit.id, link, 0)
     except Exception as e:
         print(e)
-        pass
     ind = user.index(f'{int(event.sender_id)}')
     user.pop(int(ind))
